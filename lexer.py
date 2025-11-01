@@ -1,6 +1,3 @@
-# lexer.py
-# Mostafa Adel
-
 from dfa_definitions import (
     classify_char, identifier_dfa, identifier_accept,
     number_dfa, number_accept, operator_dfa, operator_accept,
