@@ -50,7 +50,7 @@ MiniSQLCompiler/
 ### Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/MohamedElsadany56/MiniSQLCompiler.git
 cd MiniSQLCompiler
 ```
 
