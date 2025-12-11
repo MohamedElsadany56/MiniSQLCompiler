@@ -8,75 +8,63 @@ def classify_char(ch):
     elif re.match(r'\s', ch):
         return 'SPACE'
     elif re.match(r"[+\-*/=<>{},;.:]", ch):
-        return 'OP'  # arithmetic / comparison / punctuation operators
+        return 'OP'  
     elif ch in '([{':
-        return 'PAREN_LEFT'   # left parentheses types
+        return 'PAREN_LEFT'  
     elif ch in ')]}':
-        return 'PAREN_RIGHT'  # right parentheses types
+        return 'PAREN_RIGHT'  
     elif ch == "'":
-        return 'QUOTE'  # string quote delimiter
+        return 'QUOTE'  
     elif ch == '#':
         return 'HASH'
     elif ch == '_':
         return 'UNDERSCORE'
     else:
-        return ch  # allow direct symbol matching
+        return ch  
 
-
-# DFA DEFINITIONS
-
-# Identifier DFA: [a-zA-Z][a-zA-Z0-9_]*
-identifier_dfa = {
-    0: {'LETTER': 1},
-    1: {'LETTER': 1, 'DIGIT': 1, 'UNDERSCORE': 1},
-}
-identifier_accept = {1: 'IDENTIFIER'}
-
-
-# Number DFA: [0-9]+(\.[0-9]+)?
-number_dfa = {
-    0: {'DIGIT': 1},
-    1: {'DIGIT': 1, '.': 2},
-    2: {'DIGIT': 3}, 
-    3: {'DIGIT': 3},
-}
-number_accept = {1: 'INTEGER', 3: 'FLOAT'}
-
-
-# Operator DFA: + - * / = <> >= <= !=
-operator_dfa = {
-    0: {'OP': 1},
-    1: {'=': 2, '>': 2, '<': 2, '!': 2},
-}
-operator_accept = {1: 'OPERATOR', 2: 'OPERATOR'}
-
-
-
-# String DFA:  '...'
-string_dfa = {
-    0: {'QUOTE': 1},           # opening quote
-    1: {'QUOTE': 2, 'OTHER': 1}  # inside string until closing quote
-}
-string_accept = {2: 'STRING'}
-
-
-# Delimiters and parentheses
-delimiters = {',', ';'}
-
-parentheses = {
-    '(': 'LEFT_PAREN',
-    ')': 'RIGHT_PAREN',
-    '{': 'LEFT_BRACE',
-    '}': 'RIGHT_BRACE',
-    '[': 'LEFT_BRACKET',
-    ']': 'RIGHT_BRACKET'
-}
-
-
-# SQL keywords
+# KEYWORDS
 keywords = {
     "SELECT", "FROM", "WHERE", "INSERT", "INTO", "VALUES",
     "UPDATE", "SET", "DELETE", "CREATE", "TABLE",
-    "INT", "FLOAT", "TEXT", "AND", "OR", "NOT",
-    "AS", "JOIN", "ON", "GROUP", "BY", "ORDER", "DESC", "ASC"
+    "INT", "FLOAT", "TEXT"
 }
+
+# IDENTIFIER DFA
+identifier_dfa = {0:{}, 1:{}}
+for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_":
+    identifier_dfa[0][c] = 1
+    identifier_dfa[1][c] = 1
+for c in "0123456789":
+    identifier_dfa[1][c] = 1
+identifier_accept = {1:"IDENTIFIER"}
+
+# NUMBER DFA 
+number_dfa = {0:{}, 1:{}}
+for d in "0123456789":
+    number_dfa[0][d] = 1
+    number_dfa[1][d] = 1
+number_accept = {1:"INTEGER"}
+
+# OPERATOR DFA
+operator_dfa = {0:{},1:{},2:{}}
+single_ops = "=<>+-*/"
+for op in single_ops:
+    operator_dfa[0][op] = 1
+operator_dfa[0][">"] = 1
+operator_dfa[0]["<"] = 1
+operator_dfa[0]["!"] = 1
+operator_dfa[1]["="] = 2
+operator_accept = {1:"OPERATOR",2:"OPERATOR"}
+
+# STRING DFA
+string_dfa = {0:{"'":1}, 1:{}, 2:{}}
+for code in range(32,127):
+    c = chr(code)
+    if c != "'":
+        string_dfa[1][c] = 1
+string_dfa[1]["'"] = 2
+string_accept = {2:"STRING"}
+
+# DELIMITERS AND PARENTHESES
+delimiters = {",": "COMMA", ";": "SEMICOLON"}
+parentheses = {"(": "LPAREN", ")": "RPAREN"}
