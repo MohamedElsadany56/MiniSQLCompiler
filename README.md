@@ -1,56 +1,69 @@
-# SQL Lexical Analyzer using DFA
 
-A Python-based **lexical analyzer (lexer)** that tokenizes SQL code using **Deterministic Finite Automata (DFA)** for identifiers, numbers, and operators.
-It detects SQL keywords, delimiters, string literals, and comments, while also generating a **symbol table** and **error report**.
+# SQL Compiler (Lexical & Syntax Analyzer)
+
+A Python-based **SQL Compiler** that consists of two main phases:
+1. **Lexical Analyzer (Lexer):** Tokenizes SQL code using **Deterministic Finite Automata (DFA)** without relying on Regular Expressions.
+2. **Syntax Analyzer (Parser):** A **Recursive Descent Parser** that validates the token stream against a Context-Free Grammar (CFG) and generates a hierarchical **Parse Tree**.
+
+The tool features **Colorized CLI Output** for better readability and implements **Panic Mode Recovery** to handle syntax errors gracefully.
 
 ---
 
 ## Features
 
-* Tokenizes SQL input using multiple DFAs
-* Detects keywords, identifiers, literals, and operators
-* Handles comments (`--` and `## ##`) and string constants (`'string'`)
-* Reports line and column for each token and error
-* Builds a simple symbol table of identifiers
+### Phase 1: Lexical Analysis
+* **No Regex:** Character classification and tokenization are built purely using native logic and DFAs.
+* **DFA-Based:** dedicated DFAs for Identifiers, Numbers (Integers & Floats), Strings, and Operators.
+* **Case Sensitivity:** Distinguishes between `SELECT` (Keyword) and `select` (Identifier).
+* **Robust Handling:** Manages comments (`--` and `## ##`) and string literals.
+
+### Phase 2: Syntax Analysis
+* **Recursive Descent Parser:** Implements a top-down approach to validate SQL grammar.
+* **Parse Tree Generation:** visualization of the grammatical structure of the query.
+* **Supported Statements:** `CREATE`, `INSERT`, `SELECT`, `UPDATE`, `DELETE`.
+* **Complex Clauses:** Handles `WHERE` clauses with Boolean logic (`AND`, `OR`, `NOT`) and comparisons.
+* **Error Recovery:** Uses "Panic Mode" to skip invalid tokens until a semicolon is found, allowing the parser to continue checking subsequent statements.
 
 ---
 
 ## Project Overview
 
-| Member | Module                                     | Description                                                                          |
+| Member | Module | Description |
 | :----: | :----------------------------------------- | :----------------------------------------------------------------------------------- |
-|  **1** | [`dfa_definitions.py`](dfa_definitions.py) | Character classification and DFA definitions for identifiers, numbers, and operators |
-|  **2** | [`dfa_runner.py`](dfa_runner.py)           | Generic DFA engine that simulates transitions and recognizes tokens                  |
-|  **3** | [`lexer.py`](lexer.py)                     | Main lexical logic: applies DFAs, handles strings/comments/delimiters                |
-|  **4** | [`main.py`](main.py)                       | Program entry point: integrates everything, displays tokens, symbols, and errors     |
+| **1** | [`dfa_definitions.py`](dfa_definitions.py) | **(No Regex)** Character classification and DFA transitions for all token types. |
+| **2** | [`dfa_runner.py`](dfa_runner.py) | Generic DFA engine that simulates transitions and recognizes tokens. |
+| **3** | [`lexer.py`](lexer.py) | Main lexical logic: orchestrates DFAs, handles whitespace/comments/strings. |
+| **4** | [`parser.py`](parser.py) | **(New)** Recursive Descent Parser that builds the Parse Tree and handles syntax errors. |
+| **5** | [`main.py`](main.py) | Entry point: Integrates Lexer & Parser, provides **Colorized Output**. |
 
 ---
 
 ## Repository Structure
 
-```
+```text
 MiniSQLCompiler/
 │
-├── dfa_definitions.py      # Mohamed Goma (Elsadany) - DFA definitions and classify_char()
-├── dfa_runner.py           # Mohamed Hassan - Generic DFA runner
-├── lexer.py                # Mostafa Adel  - Tokenization logic
-├── main.py                 # Ziad Hamada - Main program entry point
+├── dfa_definitions.py      # DFA definitions & classify_char (No Regex)
+├── dfa_runner.py           # Generic DFA runner
+├── lexer.py                # Tokenization logic
+├── parser.py               # Syntax Analysis & Parse Tree Nodes
+├── main.py                 # Main execution & Colorized Reporting
 │
 ├── samples/
 │   └── test_1.sql          # Example SQL input file
 │
 ├── README.md
 └── requirements.txt
-```
+````
 
----
+-----
 
 ## Installation
 
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/MohamedElsadany56/MiniSQLCompiler.git
+git clone [https://github.com/MohamedElsadany56/MiniSQLCompiler.git](https://github.com/MohamedElsadany56/MiniSQLCompiler.git)
 cd MiniSQLCompiler
 ```
 
@@ -68,13 +81,13 @@ venv\Scripts\activate        # On Windows
 pip install -r requirements.txt
 ```
 
-*(Note: this project only uses built-in libraries — no external dependencies.)*
+*(Note: this project uses standard libraries like `sys` and `os`. No heavy external dependencies required.)*
 
----
+-----
 
 ## Usage
 
-### Run the lexer
+Run the compiler by passing an SQL file as an argument:
 
 ```bash
 python main.py samples/test_1.sql
@@ -85,105 +98,115 @@ python main.py samples/test_1.sql
 ```sql
 SELECT name, age FROM students WHERE age >= 22;
 INSERT INTO users VALUES ('Elsdany', 25);
-## multi-line comment
 ```
 
 ### Example Output
 
+The output is color-coded in the terminal. Below is a text representation:
+
+```text
+=== PHASE 1: TOKENS ===
+KEYWORD       SELECT                (Line 1, Col 1)
+IDENTIFIER    name                  (Line 1, Col 8)
+DELIMITER     ,                     (Line 1, Col 12)
+IDENTIFIER    age                   (Line 1, Col 14)
+KEYWORD       FROM                  (Line 1, Col 18)
+IDENTIFIER    students              (Line 1, Col 23)
+KEYWORD       WHERE                 (Line 1, Col 32)
+IDENTIFIER    age                   (Line 1, Col 38)
+OPERATOR      >=                    (Line 1, Col 41)
+INTEGER       22                    (Line 1, Col 44)
+SEMICOLON     ;                     (Line 1, Col 46)
+...
+
+=== PHASE 2: PARSE TREE ===
+Query
+  Statement
+    SelectStmt
+      KEYWORD: SELECT
+      IDENTIFIER: name
+      IDENTIFIER: age
+      KEYWORD: FROM
+      IDENTIFIER: students
+      WhereClause
+        KEYWORD: WHERE
+        Condition
+          Term
+            Comparison
+              Operand: age
+              OPERATOR: >=
+              Operand: 22
+    SEMICOLON: ;
+  Statement
+    InsertStmt
+      KEYWORD: INSERT
+      KEYWORD: INTO
+      IDENTIFIER: users
+      KEYWORD: VALUES
+      LPAREN: (
+      Value: Elsdany
+      Value: 25
+      RPAREN: )
+    SEMICOLON: ;
+
+=== ERROR REPORT ===
+✔ No syntax errors found. Parse Successful.
 ```
-=== TOKENS ===
-KEYWORD       SELECT          (line 1, col 1)
-IDENTIFIER    name            (line 1, col 8)
-DELIMITER     ,               (line 1, col 12)
-IDENTIFIER    age             (line 1, col 14)
-KEYWORD       FROM            (line 1, col 18)
-IDENTIFIER    students        (line 1, col 23)
-KEYWORD       WHERE           (line 1, col 32)
-IDENTIFIER    age             (line 1, col 38)
-OPERATOR      >=              (line 1, col 41)
-INTEGER       22              (line 1, col 44)
-DELIMITER     ;               (line 1, col 46)
 
-=== SYMBOL TABLE (Identifiers) ===
-name
-age
-students
+-----
 
-=== ERRORS ===
-No lexical errors found.
+## Context-Free Grammar (CFG)
+
+The parser implements the following grammar rules:
+
+```ebnf
+Query        ::= Statement { Statement }
+Statement    ::= (CreateStmt | InsertStmt | SelectStmt | UpdateStmt | DeleteStmt) ";"
+
+CreateStmt   ::= "CREATE" "TABLE" IDENTIFIER "(" ColumnDefList ")"
+InsertStmt   ::= "INSERT" "INTO" IDENTIFIER "VALUES" "(" ValueList ")"
+SelectStmt   ::= "SELECT" SelectList "FROM" IDENTIFIER [WhereClause]
+UpdateStmt   ::= "UPDATE" IDENTIFIER "SET" IDENTIFIER "=" Value [WhereClause]
+DeleteStmt   ::= "DELETE" "FROM" IDENTIFIER [WhereClause]
+
+WhereClause  ::= "WHERE" Condition
+Condition    ::= Term { "OR" Term }
+Term         ::= Factor { "AND" Factor }
+Factor       ::= "NOT" Factor | "(" Condition ")" | Comparison
+Comparison   ::= Operand OPERATOR Operand
 ```
 
----
-
-## Token Types
-
-| Token Type   | Description                       | Example                 |
-| :----------- | :-------------------------------- | :---------------------- |
-| `KEYWORD`    | SQL reserved word                 | `SELECT`, `FROM`        |
-| `IDENTIFIER` | User-defined name                 | `table_name`, `column1` |
-| `INTEGER`    | Integer number                    | `42`                    |
-| `FLOAT`      | Decimal number                    | `3.14`                  |
-| `STRING`     | String literal                    | `'Alice'`               |
-| `OPERATOR`   | Arithmetic or relational operator | `+`, `-`, `=`, `<=`     |
-| `DELIMITER`  | Special separator symbol          | `,`, `;`, `(`, `)`      |
-| `ERROR`      | Invalid or unrecognized character | `@`, `$`, etc.          |
-
----
+-----
 
 ## Algorithm Summary
 
-1. **Character Classification**
+1.  **Lexical Analysis (Phase 1):**
 
-   * Each character is classified (`LETTER`, `DIGIT`, `SPACE`, etc.) via `classify_char()`.
+      * Reads the input file.
+      * Classifies characters manually (no Regex).
+      * Runs DFAs to generate a stream of tokens (`KEYWORD`, `IDENTIFIER`, `INTEGER`, `FLOAT`, etc.).
 
-2. **DFA Simulation**
+2.  **Syntax Analysis (Phase 2):**
 
-   * DFAs for identifiers, numbers, and operators define valid transitions between states.
+      * Receives the list of tokens.
+      * Applies **Recursive Descent** logic based on the CFG.
+      * Constructs a **Parse Tree** of `ParseNode` objects.
+      * If a syntax error occurs, it reports the error (Red) and suggestions (Yellow), then consumes tokens until a `;` is found (**Panic Mode Recovery**) to parse the next statement.
 
-3. **Lexical Analysis**
-
-   * The `tokenize()` function:
-
-     * Skips whitespace/comments
-     * Tries each DFA in sequence
-     * Recognizes string literals
-     * Builds token list and error log
-
-4. **Output**
-
-   * The `main.py` script prints:
-
-     * All tokens with positions
-     * A symbol table for identifiers
-     * Any lexical errors
-
----
+-----
 
 ## Contributors
 
-| Name                    | Role                                       | Module               |
-| ----------------------- | ------------------------------------------ | -------------------- |
-| Mohamed Goma (Elsadany) | Character classification & DFA definitions | `dfa_definitions.py` |
-| Mohamed Hassan          | DFA runner implementation                  | `dfa_runner.py`      |
-| Mostafa Adel            | Tokenizer logic                            | `lexer.py`           |
-| Ziad Hamada             | Integration & symbol table                 | `main.py`            |
+| Name | Role | Module |
+| :--- | :--- | :--- |
+| Mohamed Goma (Elsadany) | DFA Definitions, No-Regex Logic | `dfa_definitions.py`/ `parser.py` |
+| Mohamed Hassan | DFA Runner Implementation | `dfa_runner.py`/ `parser.py` |
+| Mostafa Adel | Tokenizer Logic | `lexer.py`/ `parser.py` |
+| Ziad Hamada | Integration, CLI Colors, Parser | `main.py` / `parser.py` |
 
----
-
-## Future Enhancements
-
-* Integration with a **syntax analyzer (parser)** and **semantic analyzer**
-* Graphical User Interface (GUI)
-* Unit tests for DFAs and tokenization
-
----
+-----
 
 ## License
 
 This project is released under the **MIT License**.
 Feel free to modify and distribute with credit to the contributors.
-
----
-
-**© 2025 SQL Lexical Analyzer Project Team**
-
