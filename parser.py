@@ -1,3 +1,5 @@
+import sys
+
 class ParseNode:
     def __init__(self, name, value=None):
         self.name = name
@@ -24,7 +26,8 @@ class Parser:
         self.current_token = tokens[0] if tokens else None
         self.errors = []
 
-    def next(self):
+    # استخدمنا advance عشان كودك كله مبني عليها
+    def advance(self):
         self.pos += 1
         if self.pos < len(self.tokens):
             self.current_token = self.tokens[self.pos]
@@ -42,7 +45,7 @@ class Parser:
         if curr_type == expected_type:
             if expected_val is None or curr_val == expected_val:
                 node = ParseNode(curr_type, curr_val)
-                self.next()
+                self.advance()
                 return node
         
         expected_desc = expected_val if expected_val else expected_type
@@ -51,10 +54,106 @@ class Parser:
     def panic_mode(self):
         """Skips tokens until a SEMICOLON is found."""
         while self.current_token and self.current_token[1] != ';':
-            self.next()
+            self.advance()
         if self.current_token and self.current_token[1] == ';':
-            self.next() # Consume the semicolon to reset
+            self.advance() 
 
+    # ---------------------------------------------------------
+    # PART 1: Dispatcher (Routing Logic) - شغلك أنت
+    # ---------------------------------------------------------
+    def parse_statement(self):
+        if not self.current_token: return None
+        val = self.current_token[1]
+        
+        node = ParseNode("Statement")
+        
+        if val == "CREATE":
+            node.add(self.parse_create_stmt())
+        elif val == "INSERT":
+            node.add(self.parse_insert_stmt())
+        elif val == "SELECT":
+            node.add(self.parse_select_stmt()) 
+        elif val == "UPDATE":
+            node.add(self.parse_update_stmt()) 
+        elif val == "DELETE":
+            node.add(self.parse_delete_stmt()) 
+        else:
+            raise Exception(f"Syntax Error - Unexpected start of statement: '{val}'")
+        
+        node.add(self.match("SEMICOLON", ";"))
+        return node
+
+    # ---------------------------------------------------------
+    # PART 2: DDL (CREATE) - شغلك أنت
+    # ---------------------------------------------------------
+    def parse_create_stmt(self):
+        node = ParseNode("CreateStmt")
+        node.add(self.match("KEYWORD", "CREATE"))
+        node.add(self.match("KEYWORD", "TABLE"))
+        node.add(self.match("IDENTIFIER"))
+        node.add(self.match("LPAREN"))
+        
+        # Parse ColumnList
+        node.add(self.parse_column_def())
+        while self.current_token and self.current_token[1] == ',':
+            self.advance() # skip comma
+            node.add(self.parse_column_def())
+            
+        node.add(self.match("RPAREN"))
+        return node
+
+    def parse_column_def(self):
+        col = ParseNode("ColumnDef")
+        col.add(self.match("IDENTIFIER"))
+        
+        if self.current_token[1] in ["INT", "FLOAT", "TEXT"]:
+            col.add(self.match("KEYWORD"))
+        else:
+            raise Exception(f"Expected Data Type (INT, FLOAT, TEXT)")
+        return col
+
+    # ---------------------------------------------------------
+    # PART 3: DML (INSERT) - شغلك أنت
+    # ---------------------------------------------------------
+    def parse_insert_stmt(self):
+        node = ParseNode("InsertStmt")
+        node.add(self.match("KEYWORD", "INSERT"))
+        node.add(self.match("KEYWORD", "INTO"))
+        node.add(self.match("IDENTIFIER"))
+        node.add(self.match("KEYWORD", "VALUES"))
+        node.add(self.match("LPAREN"))
+        
+        # parse ValueList
+        node.add(self.parse_value())
+        while self.current_token and self.current_token[1] == ',':
+            self.advance() 
+            node.add(self.parse_value())
+            
+        node.add(self.match("RPAREN"))
+        return node
+
+    def parse_value(self):
+        if self.current_token[0] in ["INTEGER", "FLOAT", "STRING"]:
+            node = ParseNode("Value", self.current_token[1])
+            self.advance()
+            return node
+        raise Exception(f"Expected Value (Integer, Float, or String)")
+
+    # ---------------------------------------------------------
+    # Placeholders - مكان شغل زمايلك
+    # ---------------------------------------------------------
+    def parse_select_stmt(self):
+        pass
+
+    def parse_update_stmt(self):
+        pass
+
+    def parse_delete_stmt(self):
+        pass
+
+    # ---------------------------------------------------------
+    # Main Branch Logic - ده الكود اللي كان موجود في الـ Main
+    # ---------------------------------------------------------
     # Query -> Statement | Statement Query
     def parse_query(self):
         root = ParseNode("Query")
