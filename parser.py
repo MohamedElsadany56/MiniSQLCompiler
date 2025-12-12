@@ -26,7 +26,6 @@ class Parser:
         self.current_token = tokens[0] if tokens else None
         self.errors = []
 
-    # استخدمنا advance عشان كودك كله مبني عليها
     def advance(self):
         self.pos += 1
         if self.pos < len(self.tokens):
@@ -58,9 +57,6 @@ class Parser:
         if self.current_token and self.current_token[1] == ';':
             self.advance() 
 
-    # ---------------------------------------------------------
-    # PART 1: Dispatcher (Routing Logic) - شغلك أنت
-    # ---------------------------------------------------------
     def parse_statement(self):
         if not self.current_token: return None
         val = self.current_token[1]
@@ -83,9 +79,6 @@ class Parser:
         node.add(self.match("SEMICOLON", ";"))
         return node
 
-    # ---------------------------------------------------------
-    # PART 2: DDL (CREATE) - شغلك أنت
-    # ---------------------------------------------------------
     def parse_create_stmt(self):
         node = ParseNode("CreateStmt")
         node.add(self.match("KEYWORD", "CREATE"))
@@ -112,9 +105,6 @@ class Parser:
             raise Exception(f"Expected Data Type (INT, FLOAT, TEXT)")
         return col
 
-    # ---------------------------------------------------------
-    # PART 3: DML (INSERT) - شغلك أنت
-    # ---------------------------------------------------------
     def parse_insert_stmt(self):
         node = ParseNode("InsertStmt")
         node.add(self.match("KEYWORD", "INSERT"))
@@ -139,21 +129,9 @@ class Parser:
             return node
         raise Exception(f"Expected Value (Integer, Float, or String)")
 
-    # ---------------------------------------------------------
-    # Placeholders - مكان شغل زمايلك
-    # ---------------------------------------------------------
-    def parse_select_stmt(self):
-        pass
 
-    def parse_update_stmt(self):
-        pass
 
-    def parse_delete_stmt(self):
-        pass
 
-    # ---------------------------------------------------------
-    # Main Branch Logic - ده الكود اللي كان موجود في الـ Main
-    # ---------------------------------------------------------
     # Query -> Statement | Statement Query
     def parse_query(self):
         root = ParseNode("Query")
