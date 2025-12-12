@@ -95,63 +95,8 @@ python main.py samples/test_1.sql
 
 ### Example Input (`samples/test_1.sql`)
 
-```sql
-SELECT name, age FROM students WHERE age >= 22;
-INSERT INTO users VALUES ('Elsdany', 25);
-```
-
-### Example Output
-
-The output is color-coded in the terminal. Below is a text representation:
-
-```text
-=== PHASE 1: TOKENS ===
-KEYWORD       SELECT                (Line 1, Col 1)
-IDENTIFIER    name                  (Line 1, Col 8)
-DELIMITER     ,                     (Line 1, Col 12)
-IDENTIFIER    age                   (Line 1, Col 14)
-KEYWORD       FROM                  (Line 1, Col 18)
-IDENTIFIER    students              (Line 1, Col 23)
-KEYWORD       WHERE                 (Line 1, Col 32)
-IDENTIFIER    age                   (Line 1, Col 38)
-OPERATOR      >=                    (Line 1, Col 41)
-INTEGER       22                    (Line 1, Col 44)
-SEMICOLON     ;                     (Line 1, Col 46)
-...
-
-=== PHASE 2: PARSE TREE ===
-Query
-  Statement
-    SelectStmt
-      KEYWORD: SELECT
-      IDENTIFIER: name
-      IDENTIFIER: age
-      KEYWORD: FROM
-      IDENTIFIER: students
-      WhereClause
-        KEYWORD: WHERE
-        Condition
-          Term
-            Comparison
-              Operand: age
-              OPERATOR: >=
-              Operand: 22
-    SEMICOLON: ;
-  Statement
-    InsertStmt
-      KEYWORD: INSERT
-      KEYWORD: INTO
-      IDENTIFIER: users
-      KEYWORD: VALUES
-      LPAREN: (
-      Value: Elsdany
-      Value: 25
-      RPAREN: )
-    SEMICOLON: ;
-
-=== ERROR REPORT ===
-✔ No syntax errors found. Parse Successful.
-```
+![Sql Test](assets/test.png "SQL Query test")
+![parser output ](assets/parser.png "parser output")
 
 -----
 
