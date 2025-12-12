@@ -1,82 +1,95 @@
-import re
-
-def classify_char(ch):
-    if re.match(r'[A-Za-z]', ch):
+# removed the unused regex and redfined the tokens to be more specific
+def classify_char(ch): 
+    """Classifies a character without using regex."""
+    if 'a' <= ch <= 'z' or 'A' <= ch <= 'Z':
         return 'LETTER'
-    elif re.match(r'[0-9]', ch):
+    if '0' <= ch <= '9':
         return 'DIGIT'
-    elif re.match(r'\s', ch):
+    if ch in ' \t\n\r':
         return 'SPACE'
-    elif re.match(r"[+\-*/=<>{},;.:]", ch):
-        return 'OP'  # arithmetic / comparison / punctuation operators
-    elif ch in '([{':
-        return 'PAREN_LEFT'   # left parentheses types
-    elif ch in ')]}':
-        return 'PAREN_RIGHT'  # right parentheses types
-    elif ch == "'":
-        return 'QUOTE'  # string quote delimiter
-    elif ch == '#':
+    if ch in "+-*/=<>!": 
+        return 'OP'
+    if ch in '([{':
+        return 'PAREN_LEFT'
+    if ch in ')]}':
+        return 'PAREN_RIGHT'
+    if ch == "'":
+        return 'QUOTE'
+    if ch == '#':
         return 'HASH'
-    elif ch == '_':
+    if ch == '_':
         return 'UNDERSCORE'
-    else:
-        return ch  # allow direct symbol matching
-
-
-# DFA DEFINITIONS
-
-# Identifier DFA: [a-zA-Z][a-zA-Z0-9_]*
-identifier_dfa = {
-    0: {'LETTER': 1},
-    1: {'LETTER': 1, 'DIGIT': 1, 'UNDERSCORE': 1},
-}
-identifier_accept = {1: 'IDENTIFIER'}
-
-
-# Number DFA: [0-9]+(\.[0-9]+)?
-number_dfa = {
-    0: {'DIGIT': 1},
-    1: {'DIGIT': 1, '.': 2},
-    2: {'DIGIT': 3}, 
-    3: {'DIGIT': 3},
-}
-number_accept = {1: 'INTEGER', 3: 'FLOAT'}
-
-
-# Operator DFA: + - * / = <> >= <= !=
-operator_dfa = {
-    0: {'OP': 1},
-    1: {'=': 2, '>': 2, '<': 2, '!': 2},
-}
-operator_accept = {1: 'OPERATOR', 2: 'OPERATOR'}
-
-
-
-# String DFA:  '...'
-string_dfa = {
-    0: {'QUOTE': 1},           # opening quote
-    1: {'QUOTE': 2, 'OTHER': 1}  # inside string until closing quote
-}
-string_accept = {2: 'STRING'}
-
-
-# Delimiters and parentheses
-delimiters = {',', ';'}
-
-parentheses = {
-    '(': 'LEFT_PAREN',
-    ')': 'RIGHT_PAREN',
-    '{': 'LEFT_BRACE',
-    '}': 'RIGHT_BRACE',
-    '[': 'LEFT_BRACKET',
-    ']': 'RIGHT_BRACKET'
-}
-
-
-# SQL keywords
+    if ch in ',;':
+        return 'DELIMITER'
+    if ch == '.':
+        return 'DOT'
+    return 'OTHER'
+# KEYWORDS
 keywords = {
     "SELECT", "FROM", "WHERE", "INSERT", "INTO", "VALUES",
     "UPDATE", "SET", "DELETE", "CREATE", "TABLE",
     "INT", "FLOAT", "TEXT", "AND", "OR", "NOT",
     "AS", "JOIN", "ON", "GROUP", "BY", "ORDER", "DESC", "ASC"
+}
+
+# IDENTIFIER DFA
+# State 0 -> Start
+# State 1 -> Valid Identifier
+identifier_dfa = {0: {}, 1: {}}
+chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+digits = "0123456789"
+
+for c in chars:
+    identifier_dfa[0][c] = 1
+    identifier_dfa[1][c] = 1
+for d in digits:
+    identifier_dfa[1][d] = 1
+
+identifier_accept = {1: "IDENTIFIER"}
+
+# NUMBER DFA (Integers and Floats)
+# State 0 -> Start
+# State 1 -> Integer part (Accepting)
+# State 2 -> Decimal point (Intermediate)
+# State 3 -> Fraction part (Accepting FLOAT)
+number_dfa = {0: {}, 1: {}, 2: {}, 3: {}}
+
+for d in digits:
+    number_dfa[0][d] = 1
+    number_dfa[1][d] = 1
+    number_dfa[2][d] = 3
+    number_dfa[3][d] = 3
+
+number_dfa[1]['.'] = 2 # Transition on dot
+number_accept = {1: "INTEGER", 3: "FLOAT"} # I added float because we missed it in phase 1
+
+# OPERATOR DFA
+operator_dfa = {0: {}, 1: {}, 2: {}}
+simple_ops = "+-*/=<>!"
+
+for op in simple_ops:
+    operator_dfa[0][op] = 1
+
+# Handling multi-char ops: >=, <=, !=, <>
+operator_dfa[1]['='] = 2
+operator_dfa[1]['>'] = 2 # for <>
+
+operator_accept = {1: "OPERATOR", 2: "OPERATOR"}
+
+# STRING DFA
+string_dfa = {0: {"'": 1}, 1: {}, 2: {}}
+# Allow all printable ascii in string
+for i in range(32, 127):
+    c = chr(i)
+    if c != "'":
+        string_dfa[1][c] = 1
+string_dfa[1]["'"] = 2
+string_accept = {2: "STRING"}
+
+# DELIMITERS & PARENTHESES MAPPING
+delimiters = {",": "COMMA", ";": "SEMICOLON"}
+parentheses = {
+    "(": "LPAREN", ")": "RPAREN",
+    "{": "LBRACE", "}": "RBRACE",
+    "[": "LBRACKET", "]": "RBRACKET"
 }

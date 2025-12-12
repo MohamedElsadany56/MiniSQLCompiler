@@ -26,6 +26,7 @@ class Parser:
         self.current_token = tokens[0] if tokens else None
         self.errors = []
 
+    # استخدمنا advance عشان كودك كله مبني عليها
     def advance(self):
         self.pos += 1
         if self.pos < len(self.tokens):
@@ -58,7 +59,7 @@ class Parser:
             self.advance() 
 
     # ---------------------------------------------------------
-    # PART 1: Dispatcher (Routing Logic) - المطلوب في الـ Issue
+    # PART 1: Dispatcher (Routing Logic) - شغلك أنت
     # ---------------------------------------------------------
     def parse_statement(self):
         if not self.current_token: return None
@@ -71,11 +72,11 @@ class Parser:
         elif val == "INSERT":
             node.add(self.parse_insert_stmt())
         elif val == "SELECT":
-            node.add(self.parse_select_stmt()) # توجيه موجود لكن التنفيذ عند زميلك
+            node.add(self.parse_select_stmt()) 
         elif val == "UPDATE":
-            node.add(self.parse_update_stmt()) # توجيه موجود لكن التنفيذ عند زميلك
+            node.add(self.parse_update_stmt()) 
         elif val == "DELETE":
-            node.add(self.parse_delete_stmt()) # توجيه موجود لكن التنفيذ عند زميلك
+            node.add(self.parse_delete_stmt()) 
         else:
             raise Exception(f"Syntax Error - Unexpected start of statement: '{val}'")
         
@@ -83,7 +84,7 @@ class Parser:
         return node
 
     # ---------------------------------------------------------
-    # PART 2: DDL (CREATE) - المطلوب في الـ Issue
+    # PART 2: DDL (CREATE) - شغلك أنت
     # ---------------------------------------------------------
     def parse_create_stmt(self):
         node = ParseNode("CreateStmt")
@@ -112,7 +113,7 @@ class Parser:
         return col
 
     # ---------------------------------------------------------
-    # PART 3: DML (INSERT) - المطلوب في الـ Issue
+    # PART 3: DML (INSERT) - شغلك أنت
     # ---------------------------------------------------------
     def parse_insert_stmt(self):
         node = ParseNode("InsertStmt")
@@ -139,16 +140,27 @@ class Parser:
         raise Exception(f"Expected Value (Integer, Float, or String)")
 
     # ---------------------------------------------------------
-    # Placeholders for Other Team Members (Select, Update, Delete)
+    # Placeholders - مكان شغل زمايلك
     # ---------------------------------------------------------
     def parse_select_stmt(self):
-        # TODO: To be implemented by team member working on DQL
         pass
 
     def parse_update_stmt(self):
-        # TODO: To be implemented by team member working on DML Updates
         pass
 
     def parse_delete_stmt(self):
-        # TODO: To be implemented by team member working on DML Deletes
         pass
+
+    # ---------------------------------------------------------
+    # Main Branch Logic - ده الكود اللي كان موجود في الـ Main
+    # ---------------------------------------------------------
+    # Query -> Statement | Statement Query
+    def parse_query(self):
+        root = ParseNode("Query")
+        while self.current_token:
+            try:
+                root.add(self.parse_statement())
+            except Exception as e:
+                self.errors.append(str(e))
+                self.panic_mode()
+        return root
