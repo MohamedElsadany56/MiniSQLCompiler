@@ -61,32 +61,32 @@ flowchart TD
 flowchart TD
     Input[SQL Source Code] --> ReadChar[Read Character]
     ReadChar --> Classify[Classify Character]
-    
+
     Classify --> CheckType{Character Type?}
-    
+
     CheckType -->|Whitespace| Skip[Skip Character]
-    CheckType -->|Comment| HandleComment[Process Comment<br/>-- or ## ##]
-    CheckType -->|Quote| HandleString[String DFA<br/>Match 'string']
-    CheckType -->|Letter| IdentDFA[Identifier DFA<br/>Match a-z, A-Z, _]
-    CheckType -->|Digit| NumDFA[Number DFA<br/>Match integers/floats]
-    CheckType -->|Operator| OpDFA[Operator DFA<br/>Match +, -, =, <, >, etc.]
-    CheckType -->|Delimiter| DelimDFA[Delimiter Match<br/>Match , ; ( ) [ ] { }]
+    CheckType -->|Comment| HandleComment[Process Comment<br/>SQL comment]
+    CheckType -->|Quote| HandleString[String DFA<br/>Match quoted string]
+    CheckType -->|Letter| IdentDFA[Identifier DFA<br/>Match letters or underscore]
+    CheckType -->|Digit| NumDFA[Number DFA<br/>Match integer or float]
+    CheckType -->|Operator| OpDFA[Operator DFA<br/>Match arithmetic or comparison]
+    CheckType -->|Delimiter| DelimDFA[Delimiter DFA<br/>Comma Semicolon Parentheses Brackets Braces]
     CheckType -->|Other| Error[Lexical Error<br/>Invalid Character]
-    
+
     IdentDFA --> IsKeyword{Is Keyword?}
     IsKeyword -->|Yes| KeywordToken[Create KEYWORD Token]
     IsKeyword -->|No| IdToken[Create IDENTIFIER Token]
-    
-    NumDFA --> NumType{Has Decimal?}
+
+    NumDFA --> NumType{Has Decimal Point?}
     NumType -->|Yes| FloatToken[Create FLOAT Token]
     NumType -->|No| IntToken[Create INTEGER Token]
-    
+
     OpDFA --> OpToken[Create OPERATOR Token]
     HandleString --> StrToken[Create STRING Token]
     DelimDFA --> DelimToken[Create DELIMITER Token]
     HandleComment --> Skip
-    
-    KeywordToken --> AddToken[Add Token to List<br/>Store: type, value, line, col]
+
+    KeywordToken --> AddToken[Add Token to List<br/>Store type value line column]
     IdToken --> AddToken
     FloatToken --> AddToken
     IntToken --> AddToken
@@ -94,18 +94,19 @@ flowchart TD
     StrToken --> AddToken
     DelimToken --> AddToken
     Error --> ErrorList[Add to Error List]
-    
+
     Skip --> MoreChars{More Characters?}
     AddToken --> MoreChars
     ErrorList --> MoreChars
-    
+
     MoreChars -->|Yes| ReadChar
-    MoreChars -->|No| Output[Output:<br/>- Token List<br/>- Error List]
-    
+    MoreChars -->|No| Output[Output Token List and Error List]
+
     style Input fill:#e1f5e1
     style Output fill:#c8e6c9
     style Error fill:#ffcdd2
     style ErrorList fill:#ffcdd2
+
 ```
 
 ### DFA State Machines
