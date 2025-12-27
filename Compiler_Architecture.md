@@ -154,47 +154,48 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Input[Token Stream] --> InitParser[Initialize Parser<br/>pos = 0, errors = []]
-    InitParser --> ParseQuery[parse_query]
-    
+    Input[Token Stream] --> InitParser[Initialize Parser<br/>Position zero and empty error list]
+    InitParser --> ParseQuery[parse query]
+
     ParseQuery --> CheckToken{More Tokens?}
     CheckToken -->|No| Done[Return Parse Tree]
-    CheckToken -->|Yes| ParseStmt[parse_statement]
-    
+    CheckToken -->|Yes| ParseStmt[parse statement]
+
     ParseStmt --> StmtType{Statement Type?}
-    
-    StmtType -->|CREATE| ParseCreate[parse_create_stmt]
-    StmtType -->|INSERT| ParseInsert[parse_insert_stmt]
-    StmtType -->|SELECT| ParseSelect[parse_select_stmt]
-    StmtType -->|UPDATE| ParseUpdate[parse_update_stmt]
-    StmtType -->|DELETE| ParseDelete[parse_delete_stmt]
-    StmtType -->|Unknown| SyntaxErr[Syntax Error<br/>Unexpected Statement]
-    
-    ParseCreate --> CreateTree[Build CREATE Tree<br/>- Table Name<br/>- Column Definitions<br/>- Data Types]
-    ParseInsert --> InsertTree[Build INSERT Tree<br/>- Table Name<br/>- Value List]
-    ParseSelect --> SelectTree[Build SELECT Tree<br/>- Column List<br/>- Table Name<br/>- WHERE Clause]
-    ParseUpdate --> UpdateTree[Build UPDATE Tree<br/>- Table Name<br/>- SET Clause<br/>- WHERE Clause]
-    ParseDelete --> DeleteTree[Build DELETE Tree<br/>- Table Name<br/>- WHERE Clause]
-    
-    CreateTree --> MatchSemi[Match SEMICOLON]
+
+    StmtType -->|CREATE| ParseCreate[parse create statement]
+    StmtType -->|INSERT| ParseInsert[parse insert statement]
+    StmtType -->|SELECT| ParseSelect[parse select statement]
+    StmtType -->|UPDATE| ParseUpdate[parse update statement]
+    StmtType -->|DELETE| ParseDelete[parse delete statement]
+    StmtType -->|Unknown| SyntaxErr[Syntax Error<br/>Unexpected statement]
+
+    ParseCreate --> CreateTree[Build CREATE tree<br/>Table name columns data types]
+    ParseInsert --> InsertTree[Build INSERT tree<br/>Table name value list]
+    ParseSelect --> SelectTree[Build SELECT tree<br/>Column list table name where clause]
+    ParseUpdate --> UpdateTree[Build UPDATE tree<br/>Table name set clause where clause]
+    ParseDelete --> DeleteTree[Build DELETE tree<br/>Table name where clause]
+
+    CreateTree --> MatchSemi[Match semicolon]
     InsertTree --> MatchSemi
     SelectTree --> MatchSemi
     UpdateTree --> MatchSemi
     DeleteTree --> MatchSemi
-    
-    SyntaxErr --> PanicMode[Panic Mode Recovery<br/>Skip to next SEMICOLON]
-    PanicMode --> AddError[Add to Error List]
-    
-    MatchSemi --> AddNode[Add Statement Node<br/>to Parse Tree]
+
+    SyntaxErr --> PanicMode[Panic mode recovery<br/>Skip to next semicolon]
+    PanicMode --> AddError[Add to error list]
+
+    MatchSemi --> AddNode[Add statement node to parse tree]
     AddError --> CheckToken
     AddNode --> CheckToken
-    
-    Done --> Output[Output:<br/>- Parse Tree<br/>- Syntax Errors]
-    
+
+    Done --> Output[Output<br/>Parse tree and syntax errors]
+
     style Input fill:#e1f5e1
     style Output fill:#c8e6c9
     style SyntaxErr fill:#ffcdd2
     style AddError fill:#ffcdd2
+
 ```
 
 ### Parse Tree Structure
@@ -261,7 +262,7 @@ graph TD
 
 ```mermaid
 flowchart TD
-    Input[Parse Tree] --> InitAnalyzer[Initialize Semantic Analyzer<br/>symbol_table = {}<br/>errors = []]
+    Input[Parse Tree] --> InitAnalyzer["Initialize Semantic Analyzer<br/>symbol_table = {}<br/>errors = []"]
     InitAnalyzer --> Traverse[Traverse Parse Tree]
     
     Traverse --> NodeType{Node Type?}
@@ -273,40 +274,40 @@ flowchart TD
     NodeType -->|DeleteStmt| AnalyzeDelete[Analyze DELETE]
     NodeType -->|Other| Continue[Continue Traversing]
     
-    AnalyzeCreate --> CheckRedecl{Table Already<br/>Exists?}
-    CheckRedecl -->|Yes| ErrRedecl[Semantic Error:<br/>Table Redeclaration]
-    CheckRedecl -->|No| ValidTypes{Valid Data<br/>Types?}
-    ValidTypes -->|No| ErrType[Semantic Error:<br/>Invalid Data Type]
-    ValidTypes -->|Yes| AddTable[Add Table to<br/>Symbol Table]
+    AnalyzeCreate --> CheckRedecl{"Table Already<br/>Exists?"}
+    CheckRedecl -->|Yes| ErrRedecl["Semantic Error:<br/>Table Redeclaration"]
+    CheckRedecl -->|No| ValidTypes{"Valid Data<br/>Types?"}
+    ValidTypes -->|No| ErrType["Semantic Error:<br/>Invalid Data Type"]
+    ValidTypes -->|Yes| AddTable["Add Table to<br/>Symbol Table"]
     
-    AnalyzeInsert --> CheckTable1{Table<br/>Exists?}
-    CheckTable1 -->|No| ErrNoTable1[Semantic Error:<br/>Table Not Found]
-    CheckTable1 -->|Yes| CheckCount{Value Count<br/>= Column Count?}
-    CheckCount -->|No| ErrCount[Semantic Error:<br/>Count Mismatch]
-    CheckCount -->|Yes| CheckTypes{Value Types<br/>Match?}
-    CheckTypes -->|No| ErrTypeMismatch[Semantic Error:<br/>Type Mismatch]
-    CheckTypes -->|Yes| AnnotateInsert[Annotate Values<br/>with Types]
+    AnalyzeInsert --> CheckTable1{"Table<br/>Exists?"}
+    CheckTable1 -->|No| ErrNoTable1["Semantic Error:<br/>Table Not Found"]
+    CheckTable1 -->|Yes| CheckCount{"Value Count<br/>= Column Count?"}
+    CheckCount -->|No| ErrCount["Semantic Error:<br/>Count Mismatch"]
+    CheckCount -->|Yes| CheckTypes{"Value Types<br/>Match?"}
+    CheckTypes -->|No| ErrTypeMismatch["Semantic Error:<br/>Type Mismatch"]
+    CheckTypes -->|Yes| AnnotateInsert["Annotate Values<br/>with Types"]
     
-    AnalyzeSelect --> CheckTable2{Table<br/>Exists?}
-    CheckTable2 -->|No| ErrNoTable2[Semantic Error:<br/>Table Not Found]
-    CheckTable2 -->|Yes| CheckCols{Columns<br/>Exist?}
-    CheckCols -->|No| ErrNoCols[Semantic Error:<br/>Column Not Found]
-    CheckCols -->|Yes| AnalyzeWhere1[Analyze WHERE Clause<br/>Type Compatibility]
-    AnalyzeWhere1 --> AnnotateSelect[Annotate Columns<br/>with Types]
+    AnalyzeSelect --> CheckTable2{"Table<br/>Exists?"}
+    CheckTable2 -->|No| ErrNoTable2["Semantic Error:<br/>Table Not Found"]
+    CheckTable2 -->|Yes| CheckCols{"Columns<br/>Exist?"}
+    CheckCols -->|No| ErrNoCols["Semantic Error:<br/>Column Not Found"]
+    CheckCols -->|Yes| AnalyzeWhere1["Analyze WHERE Clause<br/>Type Compatibility"]
+    AnalyzeWhere1 --> AnnotateSelect["Annotate Columns<br/>with Types"]
     
-    AnalyzeUpdate --> CheckTable3{Table<br/>Exists?}
-    CheckTable3 -->|No| ErrNoTable3[Semantic Error:<br/>Table Not Found]
-    CheckTable3 -->|Yes| CheckUpdateCol{Column<br/>Exists?}
-    CheckUpdateCol -->|No| ErrNoCol[Semantic Error:<br/>Column Not Found]
-    CheckUpdateCol -->|Yes| CheckUpdateType{Value Type<br/>Matches?}
-    CheckUpdateType -->|No| ErrUpdateType[Semantic Error:<br/>Type Mismatch]
+    AnalyzeUpdate --> CheckTable3{"Table<br/>Exists?"}
+    CheckTable3 -->|No| ErrNoTable3["Semantic Error:<br/>Table Not Found"]
+    CheckTable3 -->|Yes| CheckUpdateCol{"Column<br/>Exists?"}
+    CheckUpdateCol -->|No| ErrNoCol["Semantic Error:<br/>Column Not Found"]
+    CheckUpdateCol -->|Yes| CheckUpdateType{"Value Type<br/>Matches?"}
+    CheckUpdateType -->|No| ErrUpdateType["Semantic Error:<br/>Type Mismatch"]
     CheckUpdateType -->|Yes| AnalyzeWhere2[Analyze WHERE Clause]
-    AnalyzeWhere2 --> AnnotateUpdate[Annotate Update<br/>with Types]
+    AnalyzeWhere2 --> AnnotateUpdate["Annotate Update<br/>with Types"]
     
-    AnalyzeDelete --> CheckTable4{Table<br/>Exists?}
-    CheckTable4 -->|No| ErrNoTable4[Semantic Error:<br/>Table Not Found]
+    AnalyzeDelete --> CheckTable4{"Table<br/>Exists?"}
+    CheckTable4 -->|No| ErrNoTable4["Semantic Error:<br/>Table Not Found"]
     CheckTable4 -->|Yes| AnalyzeWhere3[Analyze WHERE Clause]
-    AnalyzeWhere3 --> AnnotateDelete[Annotate Delete<br/>with Types]
+    AnalyzeWhere3 --> AnnotateDelete["Annotate Delete<br/>with Types"]
     
     ErrRedecl --> AddErr[Add Error to List]
     ErrType --> AddErr
@@ -320,7 +321,7 @@ flowchart TD
     ErrUpdateType --> AddErr
     ErrNoTable4 --> AddErr
     
-    AddTable --> MoreNodes{More Nodes?}
+    AddTable --> MoreNodes{"More Nodes?"}
     AnnotateInsert --> MoreNodes
     AnnotateSelect --> MoreNodes
     AnnotateUpdate --> MoreNodes
@@ -329,10 +330,10 @@ flowchart TD
     AddErr --> MoreNodes
     
     MoreNodes -->|Yes| Traverse
-    MoreNodes -->|No| CheckErrors{Errors<br/>Found?}
+    MoreNodes -->|No| CheckErrors{"Errors<br/>Found?"}
     
-    CheckErrors -->|Yes| ErrorOutput[Output:<br/>- Error List<br/>- Symbol Table<br/>Status: FAILED]
-    CheckErrors -->|No| SuccessOutput[Output:<br/>- Symbol Table Dump<br/>- Annotated Parse Tree<br/>Status: SUCCESS]
+    CheckErrors -->|Yes| ErrorOutput["Output:<br/>- Error List<br/>- Symbol Table<br/>Status: FAILED"]
+    CheckErrors -->|No| SuccessOutput["Output:<br/>- Symbol Table Dump<br/>- Annotated Parse Tree<br/>Status: SUCCESS"]
     
     ErrorOutput --> End[End]
     SuccessOutput --> End
