@@ -1,4 +1,3 @@
-# removed the unused regex and redfined the tokens to be more specific
 def classify_char(ch): 
     """Classifies a character without using regex."""
     if 'a' <= ch <= 'z' or 'A' <= ch <= 'Z':
@@ -24,7 +23,7 @@ def classify_char(ch):
     if ch == '.':
         return 'DOT'
     return 'OTHER'
-# KEYWORDS
+# keywords
 keywords = {
     "SELECT", "FROM", "WHERE", "INSERT", "INTO", "VALUES",
     "UPDATE", "SET", "DELETE", "CREATE", "TABLE",
@@ -32,7 +31,7 @@ keywords = {
     "AS", "JOIN", "ON", "GROUP", "BY", "ORDER", "DESC", "ASC"
 }
 
-# IDENTIFIER DFA
+# Identifier DFA
 # State 0 -> Start
 # State 1 -> Valid Identifier
 identifier_dfa = {0: {}, 1: {}}
@@ -47,7 +46,7 @@ for d in digits:
 
 identifier_accept = {1: "IDENTIFIER"}
 
-# NUMBER DFA (Integers and Floats)
+# Number DFA (Integers and Floats)
 # State 0 -> Start
 # State 1 -> Integer part (Accepting)
 # State 2 -> Decimal point (Intermediate)
@@ -76,7 +75,7 @@ operator_dfa[1]['>'] = 2 # for <>
 
 operator_accept = {1: "OPERATOR", 2: "OPERATOR"}
 
-# STRING DFA
+# String DFA
 string_dfa = {0: {"'": 1}, 1: {}, 2: {}}
 # Allow all printable ascii in string
 for i in range(32, 127):
@@ -86,7 +85,7 @@ for i in range(32, 127):
 string_dfa[1]["'"] = 2
 string_accept = {2: "STRING"}
 
-# DELIMITERS & PARENTHESES MAPPING
+# Delimiters & Parentheses Mapping
 delimiters = {",": "COMMA", ";": "SEMICOLON"}
 parentheses = {
     "(": "LPAREN", ")": "RPAREN",
