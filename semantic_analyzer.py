@@ -61,9 +61,9 @@ class SymbolTable:
     def dump(self):
         """Pretty-print the symbol table contents."""
         output = []
-        output.append("\n" + "="*60)
+        output.append("\n" + "_"*60)
         output.append("SYMBOL TABLE DUMP")
-        output.append("="*60)
+        output.append("_"*60)
         
         if not self.tables:
             output.append("No tables defined.")
@@ -75,7 +75,7 @@ class SymbolTable:
                 for col_name, col_type in table_info['columns']:
                     output.append(f"    - {col_name}: {col_type}")
         
-        output.append("="*60)
+        output.append("_"*60)
         return "\n".join(output)
 
 
